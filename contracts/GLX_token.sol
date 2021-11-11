@@ -413,7 +413,6 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
     }
     
     function lockTokens(uint256 initLock, uint256 unlockPeriod, uint256 amount, address walletAddress) public authorised {
-      // require(!tokenDistributionCompleted, "address already locked");
       require(!isLocked[walletAddress], "address already locked");
       require(balanceOf(walletAddress) >= amount, "insufficient balance for lock");
       
