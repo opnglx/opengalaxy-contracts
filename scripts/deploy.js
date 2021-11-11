@@ -8,16 +8,20 @@ const { ethers } = require("hardhat");
 
 async function main() {
   const totalSupply = 100000000;
-  const teamAmount = totalSupply * 0.15;
-  const stakingAmount = totalSupply * 0.14;
-  const bountyAmount = totalSupply * 0.01;
-  const listingAmount = totalSupply * 0.03;
-  const marketingAmount = totalSupply * 0.12;
-  const mergerAndAcquisitionAmount = totalSupply * 0.1;
-  const salesAmount = totalSupply * 0.3;
+  const teamAmount = (totalSupply * 0.15).toFixed(0);
+  const stakingAmount = (totalSupply * 0.14).toFixed(0);
+  const bountyAmount = (totalSupply * 0.01).toFixed(0);
+  const listingAmount = (totalSupply * 0.03).toFixed(0);
+  const marketingAmount = (totalSupply * 0.12).toFixed(0);
+  const mergerAndAcquisitionAmount = (totalSupply * 0.1).toFixed(0);
+  const salesAmount = (totalSupply * 0.3).toFixed(0);
+  const investorsAmount = (totalSupply * 0.1).toFixed(0);
+  const advisorsAmount = (totalSupply * 0.05).toFixed(0);
 
   const [
     owner,
+    investors,
+    advisors,
     team,
     staking,
     bounty,
@@ -47,6 +51,40 @@ async function main() {
       12,
       ethers.utils.parseEther(String(teamAmount)),
       team.address
+    );
+
+  // send tokens to investors and lock them
+  await galaxy
+    .connect(owner)
+    .transfer(
+      investors.address,
+      ethers.utils.parseEther(String(investorsAmount))
+    );
+
+  await galaxy
+    .connect(owner)
+    .lockTokens(
+      8,
+      12,
+      ethers.utils.parseEther(String(investorsAmount)),
+      investors.address
+    );
+
+  // send tokens to advisors and lock them
+  await galaxy
+    .connect(owner)
+    .transfer(
+      advisors.address,
+      ethers.utils.parseEther(String(advisorsAmount))
+    );
+
+  await galaxy
+    .connect(owner)
+    .lockTokens(
+      0,
+      4,
+      ethers.utils.parseEther(String(advisorsAmount)),
+      advisors.address
     );
 
   // send tokens to staking
