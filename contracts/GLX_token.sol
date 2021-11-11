@@ -2,27 +2,8 @@
 
 pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IBEP20.sol";
-
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
-
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
 
 /**
  * @dev Interface for the optional metadata functions from the BEP20 standard.
@@ -71,15 +52,33 @@ interface IBEP20Metadata is IBEP20 {
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IBEP20-approve}.
  */
-contract BEP20 is Context, IBEP20, IBEP20Metadata {
+contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
 
+    uint256 public constant MAX_SUPPPLY = 100000000 * 10**18; // 100mln tokens
     uint256 private _totalSupply;
 
-    string private _name;
-    string private _symbol;
+    string private constant _name = "Galaxy";
+    string private constant _symbol = "GLXY";
+
+    mapping (address => uint256) private initLockPeriodInQ;
+    mapping (address => uint256) private unlockPeriodsInQ;
+    mapping (address => uint256) private lockedAmount;
+    mapping (address => uint256) private lockedTransferred;
+    mapping (address => bool) public isLocked;
+    
+    mapping (address => bool) private _isAuthorised;
+
+    uint256 public lockTimestamp;
+    uint256 private constant SECONDS_IN_DAY = 86400;
+    uint256 private constant SECONDS_IN_Q = 91 * SECONDS_IN_DAY;
+
+    modifier authorised {
+      require(_isAuthorised[_msgSender()], "Not Authorised");
+      _;
+    }
 
     /**
      * @dev Sets the values for {name} and {symbol}.
@@ -90,9 +89,10 @@ contract BEP20 is Context, IBEP20, IBEP20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor(string memory name_, string memory symbol_) {
-        _name = name_;
-        _symbol = symbol_;
+    constructor() {
+        lockTimestamp = block.timestamp;
+        _mint(_msgSender(), MAX_SUPPPLY);
+        _isAuthorised[_msgSender()] = true;
     }
 
     /**
@@ -371,7 +371,22 @@ contract BEP20 is Context, IBEP20, IBEP20Metadata {
         address from,
         address to,
         uint256 amount
-    ) internal virtual {}
+    ) internal virtual {
+      if (isLocked[from]) {
+        uint256 unlockedAmount = getUnlockedBalance(from);
+        if (unlockedAmount == lockedAmount[from]) { isLocked[from] = false; }
+
+        uint256 leftLocked = lockedAmount[from] - lockedTransferred[from];
+        uint256 lockedAvailableForTransfer = unlockedAmount - lockedTransferred[from];
+        uint256 freeAmount = balanceOf(from) - leftLocked;
+        uint256 transferrableAmount = lockedAvailableForTransfer + freeAmount;
+
+        require(transferrableAmount >= amount, "transfer more than available");
+
+        uint256 addToLockedTransfered = freeAmount >= amount ? 0 : (amount - freeAmount);
+        lockedTransferred[from] += addToLockedTransfered;
+      }
+    }
 
     /**
      * @dev Hook that is called after any transfer of tokens. This includes
@@ -392,4 +407,38 @@ contract BEP20 is Context, IBEP20, IBEP20Metadata {
         address to,
         uint256 amount
     ) internal virtual {}
+
+    function authorise(address addressToAuth) public onlyOwner {
+      _isAuthorised[addressToAuth] = true;
+    }
+    
+    function lockTokens(uint256 initLock, uint256 unlockPeriod, uint256 amount, address walletAddress) public authorised {
+      // require(!tokenDistributionCompleted, "address already locked");
+      require(!isLocked[walletAddress], "address already locked");
+      require(balanceOf(walletAddress) >= amount, "insufficient balance for lock");
+      
+      initLockPeriodInQ[walletAddress] = initLock;
+      unlockPeriodsInQ[walletAddress] = unlockPeriod;
+      lockedAmount[walletAddress] = amount;
+      isLocked[walletAddress] = true;
+    }
+
+    function getUnlockedBalance(address walletAddress) public view returns (uint256) {
+      require(isLocked[walletAddress], "funds are not locked");
+      uint256 availableForTransfer;
+
+      for (uint256 i = 0; i < unlockPeriodsInQ[walletAddress]; i++) {
+        uint256 tierUnlockTimestamp = lockTimestamp + SECONDS_IN_Q * initLockPeriodInQ[walletAddress] + SECONDS_IN_Q * unlockPeriodsInQ[walletAddress] * i;
+        if (block.timestamp > tierUnlockTimestamp) {
+          availableForTransfer += lockedAmount[walletAddress] / unlockPeriodsInQ[walletAddress];
+        }
+      }
+
+      return availableForTransfer;
+    }
+
+    function getTransferableLockedAmount(address walletAddress) public view returns (uint256) {
+      require(isLocked[walletAddress], "funds are not locked");
+      return getUnlockedBalance(walletAddress) - lockedTransferred[walletAddress];
+    }
 }
