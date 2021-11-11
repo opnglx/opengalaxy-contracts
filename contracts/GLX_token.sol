@@ -423,7 +423,7 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
       isLocked[walletAddress] = true;
     }
 
-    function getUnlockedBalance(address walletAddress) public view returns (uint256) {
+    function getUnlockedBalance(address walletAddress) internal view returns (uint256) {
       require(isLocked[walletAddress], "funds are not locked");
       uint256 availableForTransfer;
 

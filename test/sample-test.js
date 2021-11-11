@@ -32,7 +32,7 @@ describe("Galaxy", function () {
     // wait until the transaction is mined
     await lockTokenForAYear.wait();
 
-    expect(await galaxy.getUnlockedBalance(addr1.address)).to.equal(
+    expect(await galaxy.getTransferableLockedAmount(addr1.address)).to.equal(
       ethers.utils.parseEther("250")
     );
 
