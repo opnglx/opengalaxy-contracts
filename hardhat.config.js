@@ -37,9 +37,9 @@ module.exports = {
     localhost: {
       accounts,
     },
-    ropsten: {
+    testnet: {
       accounts,
-      url: process.env.ROPSTEN_URL || "",
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
     },
   },
   gasReporter: {

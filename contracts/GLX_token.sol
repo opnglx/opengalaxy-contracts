@@ -427,11 +427,13 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
       uint256 availableForTransfer;
 
       for (uint256 i = 0; i < unlockPeriodsInQ[walletAddress]; i++) {
-        uint256 tierUnlockTimestamp = lockTimestamp + SECONDS_IN_Q * initLockPeriodInQ[walletAddress] + SECONDS_IN_Q * unlockPeriodsInQ[walletAddress] * i;
+        uint256 tierUnlockTimestamp = lockTimestamp + SECONDS_IN_Q * initLockPeriodInQ[walletAddress] + SECONDS_IN_Q * i;
         if (block.timestamp > tierUnlockTimestamp) {
           availableForTransfer += lockedAmount[walletAddress] / unlockPeriodsInQ[walletAddress];
         }
       }
+
+      if (availableForTransfer % 10 != 0) { availableForTransfer += 1; }
 
       return availableForTransfer;
     }
