@@ -60,6 +60,21 @@ contract GalaxyToken is BEP20 {
     }
 
     /**
+     * @dev Returns the name of the token.
+     */
+    function name() public view virtual override returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public view virtual override returns (string memory) {
+        return _symbol;
+    }
+
+    /**
      * @dev Hook that is called before any transfer of tokens. This includes
      * minting and burning.
      *
