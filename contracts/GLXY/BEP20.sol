@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts v4.3.2 (token/BEP20/BEP20.sol)
 
 pragma solidity ^0.8.0;
 
@@ -52,33 +53,15 @@ interface IBEP20Metadata is IBEP20 {
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IBEP20-approve}.
  */
-contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
+contract BEP20 is IBEP20Metadata, Ownable {
     mapping(address => uint256) private _balances;
 
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    uint256 public constant MAX_SUPPPLY = 100000000 * 10**18; // 100mln tokens
     uint256 private _totalSupply;
 
-    string private constant _name = "Galaxy";
-    string private constant _symbol = "GLXY";
-
-    mapping (address => uint256) private initLockPeriodInQ;
-    mapping (address => uint256) private unlockPeriodsInQ;
-    mapping (address => uint256) private lockedAmount;
-    mapping (address => uint256) private lockedTransferred;
-    mapping (address => bool) public isLocked;
-    
-    mapping (address => bool) private _isAuthorised;
-
-    uint256 public lockTimestamp;
-    uint256 private constant SECONDS_IN_DAY = 86400;
-    uint256 private constant SECONDS_IN_Q = 91 * SECONDS_IN_DAY;
-
-    modifier authorised {
-      require(_isAuthorised[_msgSender()], "Not Authorised");
-      _;
-    }
+    string private _name;
+    string private _symbol;
 
     /**
      * @dev Sets the values for {name} and {symbol}.
@@ -89,10 +72,9 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
      * All two of these values are immutable: they can only be set once during
      * construction.
      */
-    constructor() {
-        lockTimestamp = block.timestamp;
-        _mint(_msgSender(), MAX_SUPPPLY);
-        _isAuthorised[_msgSender()] = true;
+    constructor(string memory name_, string memory symbol_) {
+        _name = name_;
+        _symbol = symbol_;
     }
 
     /**
@@ -371,22 +353,7 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
         address from,
         address to,
         uint256 amount
-    ) internal virtual {
-      if (isLocked[from]) {
-        uint256 unlockedAmount = getUnlockedBalance(from);
-        if (unlockedAmount == lockedAmount[from]) { isLocked[from] = false; }
-
-        uint256 leftLocked = lockedAmount[from] - lockedTransferred[from];
-        uint256 lockedAvailableForTransfer = unlockedAmount - lockedTransferred[from];
-        uint256 freeAmount = balanceOf(from) - leftLocked;
-        uint256 transferrableAmount = lockedAvailableForTransfer + freeAmount;
-
-        require(transferrableAmount >= amount, "transfer more than available");
-
-        uint256 addToLockedTransfered = freeAmount >= amount ? 0 : (amount - freeAmount);
-        lockedTransferred[from] += addToLockedTransfered;
-      }
-    }
+    ) internal virtual {}
 
     /**
      * @dev Hook that is called after any transfer of tokens. This includes
@@ -407,39 +374,4 @@ contract Galaxy is Ownable, IBEP20, IBEP20Metadata {
         address to,
         uint256 amount
     ) internal virtual {}
-
-    function authorise(address addressToAuth) public onlyOwner {
-      _isAuthorised[addressToAuth] = true;
-    }
-    
-    function lockTokens(uint256 initLock, uint256 unlockPeriod, uint256 amount, address walletAddress) public authorised {
-      require(!isLocked[walletAddress], "address already locked");
-      require(balanceOf(walletAddress) >= amount, "insufficient balance for lock");
-      
-      initLockPeriodInQ[walletAddress] = initLock;
-      unlockPeriodsInQ[walletAddress] = unlockPeriod;
-      lockedAmount[walletAddress] = amount;
-      isLocked[walletAddress] = true;
-    }
-
-    function getUnlockedBalance(address walletAddress) internal view returns (uint256) {
-      require(isLocked[walletAddress], "funds are not locked");
-      uint256 availableForTransfer;
-
-      for (uint256 i = 0; i < unlockPeriodsInQ[walletAddress]; i++) {
-        uint256 tierUnlockTimestamp = lockTimestamp + SECONDS_IN_Q * initLockPeriodInQ[walletAddress] + SECONDS_IN_Q * i;
-        if (block.timestamp > tierUnlockTimestamp) {
-          availableForTransfer += lockedAmount[walletAddress] / unlockPeriodsInQ[walletAddress];
-        }
-      }
-
-      if (availableForTransfer % 10 != 0) { availableForTransfer += 1; }
-
-      return availableForTransfer;
-    }
-
-    function getTransferableLockedAmount(address walletAddress) public view returns (uint256) {
-      require(isLocked[walletAddress], "funds are not locked");
-      return getUnlockedBalance(walletAddress) - lockedTransferred[walletAddress];
-    }
 }
