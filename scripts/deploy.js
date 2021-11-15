@@ -32,7 +32,7 @@ async function main() {
   ] = await ethers.getSigners();
 
   // We get the contract to deploy
-  const Galaxy = await hre.ethers.getContractFactory("Galaxy");
+  const Galaxy = await hre.ethers.getContractFactory("GalaxyToken");
   const galaxy = await Galaxy.deploy();
 
   await galaxy.deployed();

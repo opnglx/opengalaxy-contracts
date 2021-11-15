@@ -4,41 +4,15 @@ pragma solidity ^0.8.0;
 
 import "./BEP20.sol";
 
-/**
- * @dev Implementation of the {IBEP20} interface.
- *
- * This implementation is agnostic to the way tokens are created. This means
- * that a supply mechanism has to be added in a derived contract using {_mint}.
- * For a generic mechanism see {BEP20PresetMinterPauser}.
- *
- * TIP: For a detailed writeup see our guide
- * https://forum.zeppelin.solutions/t/how-to-implement-BEP20-supply-mechanisms/226[How
- * to implement supply mechanisms].
- *
- * We have followed general OpenZeppelin Contracts guidelines: functions revert
- * instead returning `false` on failure. This behavior is nonetheless
- * conventional and does not conflict with the expectations of BEP20
- * applications.
- *
- * Additionally, an {Approval} event is emitted on calls to {transferFrom}.
- * This allows applications to reconstruct the allowance for all accounts just
- * by listening to said events. Other implementations of the EIP may not emit
- * these events, as it isn't required by the specification.
- *
- * Finally, the non-standard {decreaseAllowance} and {increaseAllowance}
- * functions have been added to mitigate the well-known issues around setting
- * allowances. See {IBEP20-approve}.
- */
 contract GalaxyToken is BEP20 {
 
     string private constant _name = "Galaxy Token";
     string private constant _symbol = "GLXY";
 
-    uint256 public lockTimestamp;
-
-    uint256 public constant MAX_SUPPPLY = 100000000 * 10**18; // 100mln tokens
-    uint256 private constant SECONDS_IN_DAY = 86400;
-    uint256 private constant SECONDS_IN_Q = 91 * SECONDS_IN_DAY;
+    mapping (address => uint256) private initLockPeriodInQ;
+    mapping (address => uint256) private unlockPeriodsInQ;
+    mapping (address => uint256) private lockedAmount;
+    mapping (address => uint256) private lockedTransferred;
 
     struct LockData {
       uint256 initLockPeriodInQ;
@@ -52,6 +26,11 @@ contract GalaxyToken is BEP20 {
     mapping (address => bool) public isLocked;
     
     mapping (address => bool) private _isAuthorised;
+
+    uint256 public constant MAX_SUPPPLY = 100000000 * 10**18; // 100mln tokens
+    uint256 public lockTimestamp;
+    uint256 private constant SECONDS_IN_DAY = 86400;
+    uint256 private constant SECONDS_IN_Q = 91 * SECONDS_IN_DAY;
 
     event TokensLocked(
       uint256 initLockPeriod,
@@ -116,8 +95,27 @@ contract GalaxyToken is BEP20 {
         require(transferrableAmount >= amount, "transfer more than available");
 
         uint256 addToLockedTransfered = freeAmount >= amount ? 0 : (amount - freeAmount);
-        amountTransferred += addToLockedTransfered;
+        user.lockedTransferred += addToLockedTransfered;
       }
+    }
+    
+    function lockTokens(uint256 initLock, uint256 unlockPeriod, uint256 amount, address walletAddress) public authorised {
+      require(initLock <= 20, "initLock period should be less than 20");
+      require(unlockPeriod >= 1 && unlockPeriod <= 20, "unlock period should be greater then 0");
+      require(amount > 1*10**18, "cannot lock less than 1 token");
+      require(!isLocked[walletAddress], "address already locked");
+      require(balanceOf(walletAddress) >= amount, "insufficient balance for lock");
+
+      lockedTokens[walletAddress] = LockData(
+        initLock,
+        unlockPeriod,
+        amount,
+        0
+      );
+      
+      isLocked[walletAddress] = true;
+
+      emit TokensLocked(initLock, unlockPeriod, amount, walletAddress);
     }
 
     function getUnlockedBalance(address walletAddress) internal view returns (uint256) {

@@ -1,9 +1,9 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Galaxy", function () {
+describe("GalaxyToken", function () {
   it("Should return totalSupply", async function () {
-    const Galaxy = await ethers.getContractFactory("Galaxy");
+    const Galaxy = await ethers.getContractFactory("GalaxyToken");
     const galaxy = await Galaxy.deploy();
     await galaxy.deployed();
     const [owner, addr1] = await ethers.getSigners();
