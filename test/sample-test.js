@@ -1,19 +1,59 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("GalaxyToken", function () {
+  it("Should return totalSupply", async function () {
+    const Galaxy = await ethers.getContractFactory("GalaxyToken");
+    const galaxy = await Galaxy.deploy();
+    await galaxy.deployed();
+    const [owner, addr1] = await ethers.getSigners();
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+    expect(await galaxy.totalSupply()).to.equal("100000000000000000000000000");
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    const transferToken = await galaxy.transfer(
+      addr1.address,
+      ethers.utils.parseEther("1000")
+    );
 
     // wait until the transaction is mined
-    await setGreetingTx.wait();
+    await transferToken.wait();
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+    expect(await galaxy.balanceOf(addr1.address)).to.equal(
+      ethers.utils.parseEther("1000")
+    );
+
+    const lockTokenForAYear = await galaxy.lockTokens(
+      0,
+      4,
+      ethers.utils.parseEther("1000"),
+      addr1.address
+    );
+
+    // wait until the transaction is mined
+    await lockTokenForAYear.wait();
+
+    expect(await galaxy.getTransferableLockedAmount(addr1.address)).to.equal(
+      ethers.utils.parseEther("250")
+    );
+
+    await galaxy
+      .connect(addr1)
+      .transfer(owner.address, ethers.utils.parseEther("150"));
+
+    expect(await galaxy.getTransferableLockedAmount(addr1.address)).to.equal(
+      ethers.utils.parseEther("100")
+    );
+
+    await galaxy
+      .connect(owner)
+      .transfer(addr1.address, ethers.utils.parseEther("50"));
+
+    await galaxy
+      .connect(addr1)
+      .transfer(owner.address, ethers.utils.parseEther("150"));
+
+    expect(await galaxy.getTransferableLockedAmount(addr1.address)).to.equal(
+      ethers.utils.parseEther("0")
+    );
   });
 });
