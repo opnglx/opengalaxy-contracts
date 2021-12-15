@@ -4,7 +4,9 @@
     "compile": "npx hardhat compile",
     "deploy": "npx hardhat run scripts/deploy.js",
     "node": "npx hardhat node",
-    "test": "npx hardhat test"
+    "test": "npx hardhat test",
+    "lint:sol": "solhint --max-warnings 0 \"contracts/**/*.sol\"",
+    "lint:sol:fix": "solhint --max-warnings 0 \"contracts/**/*.sol\" --fix"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
