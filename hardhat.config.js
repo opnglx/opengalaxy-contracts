@@ -16,7 +16,9 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 })
 
 const accounts = {
-  mnemonic: process.env.MNEMONIC || "test test test test test test test test test test test test",
+  mnemonic:
+    process.env.MNEMONIC ||
+    "test test test test test test test test test test test test",
   count: 20,
 }
 

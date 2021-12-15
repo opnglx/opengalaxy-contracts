@@ -1,12 +1,12 @@
 module.exports = {
+  root: true,
   env: {
-    browser: false,
-    es2021: true,
     mocha: true,
     node: true,
   },
   extends: [
     "standard",
+    "prettier",
     "plugin:prettier/recommended",
     "plugin:node/recommended",
   ],
@@ -19,4 +19,4 @@ module.exports = {
       globals: { task: true },
     },
   ],
-};
+}
