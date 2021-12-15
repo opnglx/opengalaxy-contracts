@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
 contract OpenGalaxyToken is ERC20, ERC20Capped, ERC20Permit, ERC20Votes {
   constructor()
-    ERC20("Open Galaxy", "GLX")
+    ERC20("Open Galaxy", "GLXY")
     ERC20Capped(1000000000 * 10**decimals())
     ERC20Permit("Open Galaxy")
   {
