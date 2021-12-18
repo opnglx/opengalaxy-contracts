@@ -1,5 +1,7 @@
 require("dotenv").config()
 
+require("hardhat-deploy")
+require("@nomiclabs/hardhat-ethers")
 require("@nomiclabs/hardhat-etherscan")
 require("@nomiclabs/hardhat-waffle")
 require("hardhat-gas-reporter")
@@ -9,14 +11,32 @@ const accounts = {
   mnemonic:
     process.env.MNEMONIC ||
     "test test test test test test test test test test test test",
-  count: 20,
+  count: 10,
 }
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.10",
+  solidity: {
+    version: "0.8.10",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000,
+      },
+    },
+  },
+
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
+    beneficiary: {
+      default: 1,
+    },
+  },
+
   networks: {
     hardhat: {
       accounts,

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Crowdsale is Ownable, ReentrancyGuard {
+contract CrowdsaleV2 is Ownable, ReentrancyGuard {
   using SafeERC20 for IERC20;
 
   IERC20 private _token;
