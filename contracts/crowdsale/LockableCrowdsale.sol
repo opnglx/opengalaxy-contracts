@@ -28,7 +28,7 @@ contract LockableCrowdsale is CrowdsaleV2 {
       "LockableCrowdsale: crowdsaleLock cannot be zero address"
     );
     require(
-      address(crowdsaleLock_) != address(_crowdsaleLock),
+      crowdsaleLock_ != _crowdsaleLock,
       "LockableCrowdsale: crowdsaleLock cannot be the same"
     );
 
