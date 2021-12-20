@@ -17,7 +17,8 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
   uint256 private _erc20Rate;
 
   // Amount of wei raised
-  uint256 private _totalRaised;
+  uint256 private _totalNativeRaised;
+  uint256 private _totalErc20Raised;
 
   address private _operator;
 
@@ -92,8 +93,12 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
     return _erc20Rate;
   }
 
-  function totalRaised() public view returns (uint256) {
-    return _totalRaised;
+  function totalNativeRaised() public view returns (uint256) {
+    return _totalNativeRaised;
+  }
+
+  function totalErc20Rasied() public view returns (uint256) {
+    return _totalErc20Raised;
   }
 
   function operator() public view returns (address) {
@@ -107,7 +112,7 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
     // calculate token amount to be created
     uint256 tokens = amount * _nativeRate;
     // update state
-    _totalRaised += amount;
+    _totalNativeRaised += amount;
 
     _saleToken.safeTransfer(msg.sender, tokens);
 
@@ -123,7 +128,7 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
     _fundingToken.safeTransferFrom(msg.sender, address(this), amount);
 
     // update state
-    _totalRaised += amount;
+    _totalErc20Raised += amount;
 
     _saleToken.safeTransfer(msg.sender, tokens);
 
