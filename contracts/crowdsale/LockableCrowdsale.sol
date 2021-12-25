@@ -22,16 +22,10 @@ contract LockableCrowdsale is CrowdsaleV2 {
     _crowdsaleLock = crowdsaleLock_;
   }
 
-  function setCrowdsaleLock(ICrowdsaleLock crowdsaleLock_) external onlyOwner {
-    require(
-      address(crowdsaleLock_) != address(0),
-      "LockableCrowdsale: crowdsaleLock cannot be zero address"
-    );
-    require(
-      crowdsaleLock_ != _crowdsaleLock,
-      "LockableCrowdsale: crowdsaleLock cannot be the same"
-    );
-
-    _crowdsaleLock = crowdsaleLock_;
+  function _deliverTokens(address beneficiary, uint256 amount)
+    internal
+    override
+  {
+    _crowdsaleLock.transferAndLock(beneficiary, amount);
   }
 }
