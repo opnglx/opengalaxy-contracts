@@ -114,7 +114,7 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
     // update state
     _totalNativeRaised += amount;
 
-    _saleToken.safeTransfer(msg.sender, tokens);
+    _deliverTokens(msg.sender, tokens);
 
     emit TokensPurchased(msg.sender, amount, tokens);
   }
@@ -130,7 +130,7 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
     // update state
     _totalErc20Raised += amount;
 
-    _saleToken.safeTransfer(msg.sender, tokens);
+    _deliverTokens(msg.sender, tokens);
 
     emit TokensPurchased(msg.sender, amount, tokens);
   }
@@ -210,5 +210,12 @@ contract CrowdsaleV2 is Ownable, Pausable, ReentrancyGuard {
 
   function unpause() public onlyOwner {
     _unpause();
+  }
+
+  function _deliverTokens(address beneficiary, uint256 amount)
+    internal
+    virtual
+  {
+    _saleToken.safeTransfer(beneficiary, amount);
   }
 }
